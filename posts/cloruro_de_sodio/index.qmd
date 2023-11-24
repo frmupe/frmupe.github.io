@@ -115,9 +115,6 @@ ggplot(porcentajes, aes(x = "", y = porcentaje, fill = Entradas)) +
   guides(fill = guide_legend(title = "Entradas")) + 
   scale_fill_brewer(palette = "Greys") +
   theme(legend.position = "bottom")  
-# Salva las gráficas
-#ggsave("pie.png", width = 20, units = "cm")
-#ggsave("pie.pdf", width = 20, units = "cm")
 ```
 
 ```{r}
