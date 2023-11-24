@@ -1,0 +1,9 @@
+---
+title: "Introducción a este blog"
+author: "Francisco Murphy Pérez"
+date: "2023-11-23"
+---
+
+En mi tesis de doctorado usé `R` para realizar varios análisis. Mi flujo de trabajo, fue crear un archivo en `quarto` para documentar y analizar los datos en cuestión. Después de varios análisis, la idea de generar un `blog` con una entrada por análisis se me hizo ideal. Así la tesis no se llena de *scripts* y mi trabajo no se pierde.
+
+![Le Penseur, por Auguste Rodin.](rodin1.jpg)

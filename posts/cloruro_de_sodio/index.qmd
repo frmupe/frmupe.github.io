@@ -1,0 +1,133 @@
+---
+title: "Cuál es el agente precipitante más usado en la cristalización de la lisozima?"
+author: "Francisco Murphy Pérez"
+date: "2023-11-23"
+categories: [código, análisis, R]
+---
+
+## Obtención de datos
+
+Sabemos de antemano que la lisozima de clara de huevo de gallina se ha cristalizado en múltiples ocasiones. Los detalles de los experimentos de cristalización, se pueden obtener del PDB con una simple búsqueda avanzada, como se muestra en la siguiente imagen.
+
+![Lisozimas cristalizadas en el PDB.](busqueda_avanzada.png)
+
+Los resultados de la búsqueda avanzada, al 23 de noviembre del 2023, indican que la lisozima se ha cristalizado al menos 1116 veces. Los filtros usados para obtener estos datos fueron:
+
+-   El identificador `uniprot` de la entidad cristalizada tiene que ser igual a `P00698` (el cual corresponde al identificador de la lisozima de clara de huevo de gallina en la base de datos [uniprot](https://www.uniprot.org/)).
+-   El experimento corresponde a difracción de rayos-X.
+
+A partir de los resultados obtenidos de la búsqueda avanzada, se crea un archivo `.csv` que contenga los detalles del procedimiento de cristalización para cada entrada.
+
+## Limpieza de datos
+
+No todas las entradas tienen datos útiles. Por ejemplo:
+
+``` {style="background-color: rgba(255, 255, 128, .5);"}
+"1AZF","pH 4.6"
+"1HEL"
+"1KIP","FREE TEXT GOES HERE."
+"1UIC","50 MM ACETATE AT PH 4.7 CONTAINING 0.9 M NACL"
+"1VDQ","batch method"
+```
+
+De estas entradas solo la cuarta es útil para este análisis, dado que tiene la concentración y la fórmula química del precipitante usado. Así, el primer paso en la limpieza de datos es eliminar las entradas que no contengan información útil.
+
+```{r}
+#| include: false
+#| echo: false
+#| warning: false
+# Carga librerías necesarias
+install.packages("readr")
+install.packages("stringr")
+install.packages("dplyr")
+install.packages("ggplot2")
+install.packages("RColorBrewer")
+install.packages("kableExtra")
+library("readr")
+library("stringr")
+library("dplyr")
+library("ggplot2")
+library("RColorBrewer")
+library("kableExtra")
+```
+
+```{r}
+#| echo: true
+#| warning: false
+# Lee el archivo `.csv`
+df <- read_csv("rcsb_pdb_custom_report_20231120172315.csv")
+
+# Convierte todo a minúsculas
+df$crystal_growth_procedure <- tolower(df$crystal_growth_procedure)
+
+# Elimina entradas inútiles
+df2 <- df %>% 
+  filter(!is.na(crystal_growth_procedure)) %>%
+  filter(!str_detect(crystal_growth_procedure, "^ph"))
+
+# Reemplaza 'nacl' por 'sodium chloride' 
+df2$crystal_growth_procedure <- str_replace_all(df2$crystal_growth_procedure, "nacl", "sodium chloride")
+
+# Reemplaza 'nano3' por 'sodium nitrate' 
+df2$crystal_growth_procedure <- str_replace_all(df2$crystal_growth_procedure, "nacl", "sodium chloride")
+```
+
+Ahora, como ejemplo, obtiene el porcentaje de entradas en las que está escrito 'sodium chloride', 'sodium nitrate' y también, el porcentaje de las entradas que no resultaron útiles.
+
+```{r}
+#| echo: true
+#| warning: false
+# Define las entradas totales
+entradas_tot <- nrow(df)
+
+# Obtiene el número de entradas restantes
+entradas_res <- nrow(df2)
+
+# Obtiene el número de entradas que contienen 'sodium chloride'
+entradas_nacl <- sum(str_detect(df2$crystal_growth_procedure, 'sodium chloride'))
+
+# Obtiene el número de entradas que contienen 'sodium nitrate'
+entradas_nano3 <- sum(str_detect(df2$crystal_growth_procedure, 'sodium nitrate'))
+
+# Obtiene porcentajes
+porc_nacl <- round(entradas_nacl/entradas_tot*100, digits = 2)
+porc_nano3 <- round(entradas_nano3/entradas_tot*100, digits = 2)
+porc_nada <- round((entradas_tot-entradas_res)/entradas_tot*100, digits = 2)
+porc_otros <- round((entradas_res-(entradas_nacl+entradas_nano3))/entradas_tot*100, digits = 2)
+```
+
+## Visualización de datos
+
+Una gráfica de *pie* para visualizar los porcentajes resultantes.
+
+```{r}
+# Crea el data frame
+porcentajes <- tibble(Entradas = c("Cloruro de sodio", "Nitrato de sodio", "No útiles", "Restantes" ), porcentaje = c(porc_nacl, porc_nano3, porc_nada, porc_otros))
+
+# Crea la gráfica
+ggplot(porcentajes, aes(x = "", y = porcentaje, fill = Entradas)) +
+  geom_col(color = "black") +
+  geom_text(aes(label = paste0(porcentaje, " %")),
+            color="black",
+            position = position_stack(vjust = 0.4)) +
+  coord_polar(theta = "y") +
+  theme_void() +
+  guides(fill = guide_legend(title = "Entradas")) + 
+  scale_fill_brewer(palette = "Greys") +
+  theme(legend.position = "bottom")  
+# Salva las gráficas
+#ggsave("pie.png", width = 20, units = "cm")
+#ggsave("pie.pdf", width = 20, units = "cm")
+```
+
+```{r}
+#| include: false
+#| eval: false
+#| echo: true
+#| warning: false
+
+# Crea la tabla final
+porcentajes %>%
+  kbl(caption = "") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
+```

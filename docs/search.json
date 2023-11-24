@@ -1,0 +1,51 @@
+[
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "About this blog"
+  },
+  {
+    "objectID": "posts/cloruro_de_sodio/index.html",
+    "href": "posts/cloruro_de_sodio/index.html",
+    "title": "Cuál es el agente precipitante más usado en la cristalización de la lisozima?",
+    "section": "",
+    "text": "Sabemos de antemano que la lisozima de clara de huevo de gallina se ha cristalizado en múltiples ocasiones. Los detalles de los experimentos de cristalización, se pueden obtener del PDB con una simple búsqueda avanzada, como se muestra en la siguiente imagen.\n\n\n\nLisozimas cristalizadas en el PDB.\n\n\nLos resultados de la búsqueda avanzada, al 23 de noviembre del 2023, indican que la lisozima se ha cristalizado al menos 1116 veces. Los filtros usados para obtener estos datos fueron:\n\nEl identificador uniprot de la entidad cristalizada tiene que ser igual a P00698 (el cual corresponde al identificador de la lisozima de clara de huevo de gallina en la base de datos uniprot).\nEl experimento corresponde a difracción de rayos-X.\n\nA partir de los resultados obtenidos de la búsqueda avanzada, se crea un archivo .csv que contenga los detalles del procedimiento de cristalización para cada entrada."
+  },
+  {
+    "objectID": "posts/cloruro_de_sodio/index.html#obtención-de-datos",
+    "href": "posts/cloruro_de_sodio/index.html#obtención-de-datos",
+    "title": "Cuál es el agente precipitante más usado en la cristalización de la lisozima?",
+    "section": "",
+    "text": "Sabemos de antemano que la lisozima de clara de huevo de gallina se ha cristalizado en múltiples ocasiones. Los detalles de los experimentos de cristalización, se pueden obtener del PDB con una simple búsqueda avanzada, como se muestra en la siguiente imagen.\n\n\n\nLisozimas cristalizadas en el PDB.\n\n\nLos resultados de la búsqueda avanzada, al 23 de noviembre del 2023, indican que la lisozima se ha cristalizado al menos 1116 veces. Los filtros usados para obtener estos datos fueron:\n\nEl identificador uniprot de la entidad cristalizada tiene que ser igual a P00698 (el cual corresponde al identificador de la lisozima de clara de huevo de gallina en la base de datos uniprot).\nEl experimento corresponde a difracción de rayos-X.\n\nA partir de los resultados obtenidos de la búsqueda avanzada, se crea un archivo .csv que contenga los detalles del procedimiento de cristalización para cada entrada."
+  },
+  {
+    "objectID": "posts/cloruro_de_sodio/index.html#limpieza-de-datos",
+    "href": "posts/cloruro_de_sodio/index.html#limpieza-de-datos",
+    "title": "Cuál es el agente precipitante más usado en la cristalización de la lisozima?",
+    "section": "Limpieza de datos",
+    "text": "Limpieza de datos\nNo todas las entradas tienen datos útiles. Por ejemplo:\n\"1AZF\",\"pH 4.6\"\n\"1HEL\"\n\"1KIP\",\"FREE TEXT GOES HERE.\"\n\"1UIC\",\"50 MM ACETATE AT PH 4.7 CONTAINING 0.9 M NACL\"\n\"1VDQ\",\"batch method\"\nDe estas entradas solo la cuarta es útil para este análisis, dado que tiene la concentración y la fórmula química del precipitante usado. Así, el primer paso en la limpieza de datos es eliminar las entradas que no contengan información útil.\n\n# Lee el archivo `.csv`\ndf &lt;- read_csv(\"rcsb_pdb_custom_report_20231120172315.csv\")\n\n# Convierte todo a minúsculas\ndf$crystal_growth_procedure &lt;- tolower(df$crystal_growth_procedure)\n\n# Elimina entradas inútiles\ndf2 &lt;- df %&gt;% \n  filter(!is.na(crystal_growth_procedure)) %&gt;%\n  filter(!str_detect(crystal_growth_procedure, \"^ph\"))\n\n# Reemplaza 'nacl' por 'sodium chloride' \ndf2$crystal_growth_procedure &lt;- str_replace_all(df2$crystal_growth_procedure, \"nacl\", \"sodium chloride\")\n\n# Reemplaza 'nano3' por 'sodium nitrate' \ndf2$crystal_growth_procedure &lt;- str_replace_all(df2$crystal_growth_procedure, \"nacl\", \"sodium chloride\")\n\nAhora, como ejemplo, obtiene el porcentaje de entradas en las que está escrito ‘sodium chloride’, ‘sodium nitrate’ y también, el porcentaje de las entradas que no resultaron útiles.\n\n# Define las entradas totales\nentradas_tot &lt;- nrow(df)\n\n# Obtiene el número de entradas restantes\nentradas_res &lt;- nrow(df2)\n\n# Obtiene el número de entradas que contienen 'sodium chloride'\nentradas_nacl &lt;- sum(str_detect(df2$crystal_growth_procedure, 'sodium chloride'))\n\n# Obtiene el número de entradas que contienen 'sodium nitrate'\nentradas_nano3 &lt;- sum(str_detect(df2$crystal_growth_procedure, 'sodium nitrate'))\n\n# Obtiene porcentajes\nporc_nacl &lt;- round(entradas_nacl/entradas_tot*100, digits = 2)\nporc_nano3 &lt;- round(entradas_nano3/entradas_tot*100, digits = 2)\nporc_nada &lt;- round((entradas_tot-entradas_res)/entradas_tot*100, digits = 2)\nporc_otros &lt;- round((entradas_res-(entradas_nacl+entradas_nano3))/entradas_tot*100, digits = 2)"
+  },
+  {
+    "objectID": "posts/cloruro_de_sodio/index.html#visualización-de-datos",
+    "href": "posts/cloruro_de_sodio/index.html#visualización-de-datos",
+    "title": "Cuál es el agente precipitante más usado en la cristalización de la lisozima?",
+    "section": "Visualización de datos",
+    "text": "Visualización de datos\nUna gráfica de pie para visualizar los porcentajes resultantes.\n\n# Crea el data frame\nporcentajes &lt;- tibble(Entradas = c(\"Cloruro de sodio\", \"Nitrato de sodio\", \"No útiles\", \"Restantes\" ), porcentaje = c(porc_nacl, porc_nano3, porc_nada, porc_otros))\n\n# Crea la gráfica\nggplot(porcentajes, aes(x = \"\", y = porcentaje, fill = Entradas)) +\n  geom_col(color = \"black\") +\n  geom_text(aes(label = paste0(porcentaje, \" %\")),\n            color=\"black\",\n            position = position_stack(vjust = 0.4)) +\n  coord_polar(theta = \"y\") +\n  theme_void() +\n  guides(fill = guide_legend(title = \"Entradas\")) + \n  scale_fill_brewer(palette = \"Greys\") +\n  theme(legend.position = \"bottom\")  \n\n\n\n\n\n\n\n# Salva las gráficas\n#ggsave(\"pie.png\", width = 20, units = \"cm\")\n#ggsave(\"pie.pdf\", width = 20, units = \"cm\")"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Francisco Murphy Pérez",
+    "section": "",
+    "text": "Cuál es el agente precipitante más usado en la cristalización de la lisozima?\n\n\n\n\n\n\ncódigo\n\n\nanálisis\n\n\nR\n\n\n\n\n\n\n\n\n\n23 nov 2023\n\n\nFrancisco Murphy Pérez\n\n\n\n\n\n\n\n\n\n\n\n\nIntroducción a este blog\n\n\n\n\n\n\n\n\n\n\n\n23 nov 2023\n\n\nFrancisco Murphy Pérez\n\n\n\n\n\n\nNo hay resultados"
+  },
+  {
+    "objectID": "posts/introduccion/index.html",
+    "href": "posts/introduccion/index.html",
+    "title": "Introducción a este blog",
+    "section": "",
+    "text": "En mi tesis de doctorado usé R para realizar varios análisis. Mi flujo de trabajo, fue crear un archivo en quarto para documentar y analizar los datos en cuestión. Después de varios análisis, la idea de generar un blog con una entrada por análisis se me hizo ideal. Así la tesis no se llena de scripts y mi trabajo no se pierde.\n\n\n\nLe Penseur, por Auguste Rodin."
+  }
+]
