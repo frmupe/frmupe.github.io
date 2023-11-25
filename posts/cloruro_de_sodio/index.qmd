@@ -9,7 +9,7 @@ categories: [código, análisis, R]
 
 Sabemos de antemano que la lisozima de clara de huevo de gallina se ha cristalizado en múltiples ocasiones. Los detalles de los experimentos de cristalización, se pueden obtener del PDB con una simple búsqueda avanzada, como se muestra en la siguiente imagen.
 
-![Lisozimas cristalizadas en el PDB.](busqueda_avanzada.png)
+![Lisozimas cristalizadas en el PDB.](busqueda_avanzada_mod.png)
 
 Los resultados de la búsqueda avanzada, al 23 de noviembre del 2023, indican que la lisozima se ha cristalizado al menos 1116 veces. Los filtros usados para obtener estos datos fueron:
 
